@@ -8,18 +8,19 @@ services:
     container_name: protwis-app
     restart: unless-stopped
     environment:
-      - DJANGO_SETTINGS_MODULE=protwis.settings_local_development
+      - DJANGO_SETTINGS_MODULE=protwis.settings_local_docker
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=protwis
       - POSTGRES_PASSWORD=protwis
       - POSTGRES_DB=protwis
+      - PROTWIS_DATA_DIR=/app/data/protwis/gpcr
     # Source and data are bind-mounted — the image stays code-free so
     # upgrading Python/Django is a pure image rebuild.
-    # Override defaults by setting PROTWIS_SRC / PROTWIS_DATA env vars.
+    # Override defaults via .env (see .env.example).
     volumes:
       - ${PROTWIS_SRC:-../protwis}:/app/src
-      - ${PROTWIS_DATA:-../protwis/data}:/app/data
+      - ${PROTWIS_GPCRDB_DATA:-../gpcrdb_data}:/app/data/protwis/gpcr
     ports:
       - "8000:8000"
     networks:
@@ -29,6 +30,8 @@ services:
         condition: service_healthy
 
   db:
+    # TODO: switch to ghcr.io/protwis/postgres16-rdkit:latest once that package
+    # is made public on GitHub. Using iskoldt's public Docker Hub image meanwhile.
     image: iskoldt/postgres16-rdkit:latest
     container_name: protwis-db
     restart: unless-stopped
