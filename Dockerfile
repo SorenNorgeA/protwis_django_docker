@@ -8,15 +8,23 @@ FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
-# Dev headers required by C extensions: psycopg2, freesasa, lxml, Cython, Pillow (reportlab).
+# Dev headers required by C extensions:
+#   psycopg2, freesasa, lxml, Cython, Pillow (reportlab) — original baseline.
+#   pkg-config, cmake, libcairo2-dev — required only when newer reportlab/svglib
+#   pull in pycairo (matrix probe with floated accessories triggers this).
+#   Production's pinned reportlab==3.6.12 doesn't, but the deps are tiny and
+#   help the compatibility matrix actually exercise build paths.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         git \
+        pkg-config \
+        cmake \
         libpq-dev \
         libxml2-dev \
         libxslt1-dev \
         libfreetype6-dev \
         libjpeg-dev \
+        libcairo2-dev \
         zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 

@@ -58,11 +58,13 @@ envsubst < pyproject.matrix.toml.tmpl > pyproject.toml
 if timeout 120 uv lock; then
     LOCK=pass
 
-    # 3. Gate 2: docker build (and push if GH_OWNER is set).
-    BUILD_TAG_LOCAL="matrix-probe-local:$TAG"
+    # 3. Gate 2: docker build.
+    #    `docker buildx build --push` pushes EVERY tag attached, so we must
+    #    not give it a tag that isn't pushable (e.g. an unprefixed
+    #    "matrix-probe-local:..." resolves to docker.io/library/... which we
+    #    cannot push to). Branch tag selection on whether GH_OWNER is set.
     BUILD_ARGS=(
         --build-arg "PYTHON_VERSION=$PY_MIN"
-        --tag "$BUILD_TAG_LOCAL"
         --cache-to   "type=gha,scope=$TAG,mode=max"
         --cache-from "type=gha,scope=$TAG"
     )
@@ -72,7 +74,7 @@ if timeout 120 uv lock; then
         BUILD_ARGS+=(--tag "$REMOTE_TAG" --push)
         TAG_PUSHED="$REMOTE_TAG"
     else
-        BUILD_ARGS+=(--load)
+        BUILD_ARGS+=(--tag "matrix-probe-local:$TAG" --load)
     fi
 
     if timeout 600 docker buildx build "${BUILD_ARGS[@]}" .; then
