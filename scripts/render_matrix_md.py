@@ -84,7 +84,9 @@ def main():
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     total = len(cells)
-    green = sum(1 for c in cells if c.get("lock") == "pass" and c.get("build") == "pass")
+    green = sum(
+        1 for c in cells if c.get("lock") == "pass" and c.get("build") == "pass"
+    )
     red_lock = sum(1 for c in cells if c.get("lock") == "fail")
     red_build = sum(
         1 for c in cells if c.get("lock") == "pass" and c.get("build") == "fail"

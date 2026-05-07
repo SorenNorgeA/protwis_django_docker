@@ -214,6 +214,18 @@ When upstream developers change system dependencies (like adding a new Ubuntu pa
 
 The repo also publishes one image tag per combination of major versions, produced by a manually-triggered compatibility-matrix workflow. See [`docs/compatibility-matrix.md`](compatibility-matrix.md) for the live list — every green cell links to a pullable tag like `ghcr.io/iskoldt-x/protwis_django_docker:matrix-py311-dj42-rdk202409`. To try one, set `app.image` to that tag in `docker-compose.yml` and `docker compose up -d --force-recreate app`. These are *probe* images: the docker env is known to build, but upstream protwis code may or may not run on a non-baseline combination.
 
+### Adding a new version to the matrix
+
+The matrix is intentionally easy to extend years from now. The single source of truth is [`scripts/matrix_versions.py`](../scripts/matrix_versions.py) — three Python lists, one per axis. Append a `(pin, upper-bound-exclusive)` tuple to add a row:
+
+```python
+PYTHON.append(("3.13", "3.14"))     # Python 3.13
+DJANGO.append(("6.2", "7.0"))       # Django 6.2 LTS
+RDKIT.append(("2027.03", "2027.04")) # RDKit 2027.03 stable
+```
+
+Commit, dispatch the **Compatibility Matrix** workflow from the GitHub Actions UI, and the new cells appear in `docs/compatibility-matrix.md` after the run finishes. The workflow, the cell driver, and the template are version-agnostic; you never need to touch them. Design rationale: [`docs/design-pipeline-3.md`](design-pipeline-3.md).
+
 ## 13. Where to look next
 
 - Check out the upstream [protwis repository](https://github.com/protwis/protwis) for the application code.

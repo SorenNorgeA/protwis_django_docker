@@ -4,11 +4,15 @@ name: Compatibility Matrix
 # See docs/design-pipeline-3.md for the full design.
 #
 # What this workflow does:
-#   1. Reads scripts/matrix-cells.csv (36 rows of Python × Django × RDKit).
-#   2. For each row: render pyproject.matrix.toml.tmpl → pyproject.toml,
+#   1. Expands scripts/matrix_versions.py into the full Cartesian product
+#      of (Python × Django × RDKit) cells via scripts/expand_matrix.py.
+#   2. For each cell: render pyproject.matrix.toml.tmpl → pyproject.toml,
 #      run `uv lock` (gate 1), `docker buildx build --push` (gate 2).
 #   3. After all cells: render docs/compatibility-matrix.md and commit
 #      it back to main.
+#
+# To add a new Python/Django/RDKit version: edit scripts/matrix_versions.py.
+# Nothing in this workflow file needs to change.
 #
 # A red cell never fails the workflow — failures are data, not faults.
 
@@ -50,8 +54,10 @@ jobs:
           GH_OWNER: ${{ github.repository_owner }}
         run: |
           mkdir -p cell-results
-          # Skip CSV comments / header / blanks; pipe the rest to the driver.
-          grep -vE '^\s*(#|py_min|$)' scripts/matrix-cells.csv | \
+          # The cell list is generated from scripts/matrix_versions.py.
+          # To add or remove a Python/Django/RDKit value, edit that file —
+          # nothing here changes.
+          python3 scripts/expand_matrix.py | \
           while IFS=, read -r py_min py_max dj dj_next rdk rdk_next; do
             scripts/run_matrix_cell.sh \
               "$py_min" "$py_max" \
