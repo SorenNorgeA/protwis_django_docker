@@ -1,74 +1,66 @@
+# Project name, host port mappings, and host paths are driven by .env.
+# Run a second isolated stack alongside this one with:
+#   docker compose --env-file .env.alt up -d
+# See docs/onboarding.md for the end-to-end story.
+
 services:
   app:
     build:
       context: .
       args:
         PYTHON_VERSION: "3.8"
-    image: protwis-django:dev
-    container_name: protwis-app
+    image: ghcr.io/iskoldt-x/protwis_django_docker:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-gpcrdb}-app
     restart: unless-stopped
     environment:
       - DJANGO_SETTINGS_MODULE=protwis.settings_local_docker
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=protwis
-      - POSTGRES_PASSWORD=protwis
-      - POSTGRES_DB=protwis
+      - POSTGRES_USER=${POSTGRES_USER:-protwis}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-protwis}
+      - POSTGRES_DB=${POSTGRES_DB:-protwis}
       - PROTWIS_DATA_DIR=/app/data/protwis/gpcr
-    # Source and data are bind-mounted — the image stays code-free so
-    # upgrading Python/Django is a pure image rebuild.
-    # Override defaults via .env (see .env.example).
     volumes:
       - ${PROTWIS_SRC:-../protwis}:/app/src
       - ${PROTWIS_GPCRDB_DATA:-../gpcrdb_data}:/app/data/protwis/gpcr
     ports:
-      - "8000:8000"
-    networks:
-      - gpcrdb
+      - "${APP_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    # TODO: switch to ghcr.io/protwis/postgres16-rdkit:latest once that package
-    # is made public on GitHub. Using iskoldt's public Docker Hub image meanwhile.
-    image: iskoldt/postgres16-rdkit:latest
-    container_name: protwis-db
+    image: ghcr.io/iskoldt-x/postgres_rdkit_docker:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-gpcrdb}-db
     restart: unless-stopped
     shm_size: 2g
     environment:
-      - POSTGRES_USER=protwis
-      - POSTGRES_PASSWORD=protwis
-      - POSTGRES_DB=protwis
+      - POSTGRES_USER=${POSTGRES_USER:-protwis}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-protwis}
+      - POSTGRES_DB=${POSTGRES_DB:-protwis}
       - PGDATA=/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - gpcrdb
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U protwis"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-protwis}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   adminer:
     image: adminer
-    container_name: protwis-adminer
+    container_name: ${COMPOSE_PROJECT_NAME:-gpcrdb}-adminer
     restart: unless-stopped
     ports:
-      - "8888:8080"
+      - "${ADMINER_PORT:-8888}:8080"
     environment:
       - ADMINER_DEFAULT_SERVER=db
-    networks:
-      - gpcrdb
     depends_on:
       db:
         condition: service_healthy
 
-networks:
-  gpcrdb:
-
 volumes:
   postgres_data:
+    name: ${COMPOSE_PROJECT_NAME:-gpcrdb}-postgres-data
