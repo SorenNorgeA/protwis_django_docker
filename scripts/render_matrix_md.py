@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """
-Render compatibility-matrix.md from JSON cell results.
+Render compatibility-matrix.md from merged JSON cell results.
 
     render_matrix_md.py <cell-results-dir>
 
-Reads every *.json file in the directory; each is shaped like:
+Reads every *.json file in the directory; each is the merged per-cell
+record produced by scripts/merge_matrix_cells.py:
 
     {"python":"3.11","django":"4.2","rdkit":"2024.09",
-     "lock":"pass","build":"pass","tag":"...","pushed":"..."}
+     "lock":"pass",
+     "build_amd64":"pass","build_arm64":"pass",
+     "base_tag":"matrix-py311-dj42-rdk202409",
+     "tag":"matrix-py311-dj42-rdk202409",
+     "pushed":"ghcr.io/owner/repo:..."}
 
 Writes Markdown to stdout. The workflow pipes it into docs/compatibility-matrix.md.
 
@@ -39,23 +44,32 @@ def cell_md(c, gh_owner):
     if c is None:
         return "—"
     lock = c.get("lock", "fail")
-    build = c.get("build", "skip")
+    b_amd = c.get("build_amd64", "missing")
+    b_arm = c.get("build_arm64", "missing")
     tag = c.get("tag", "")
     pushed = c.get("pushed", "")
 
     if lock == "fail":
         return "❌ lock"
-    if build == "fail":
+
+    amd_ok = b_amd == "pass"
+    arm_ok = b_arm == "pass"
+
+    if not amd_ok and not arm_ok:
         return "❌ build"
-    if build == "pass":
-        if pushed:
-            url = (
-                f"https://github.com/{gh_owner}/protwis_django_docker"
-                "/pkgs/container/protwis_django_docker"
-            )
-            return f"[`{tag}`]({url}) ✅"
-        return f"`{tag}` ✅ (local)"
-    return "?"
+
+    pkg_url = (
+        f"https://github.com/{gh_owner}/protwis_django_docker"
+        "/pkgs/container/protwis_django_docker"
+    )
+    tag_md = f"[`{tag}`]({pkg_url})" if pushed else f"`{tag}`"
+    suffix = "" if pushed else " (local)"
+
+    if amd_ok and arm_ok:
+        return f"{tag_md} ✅{suffix}"
+    if amd_ok:
+        return f"{tag_md} ⚠️ amd64 only{suffix}"
+    return f"{tag_md} ⚠️ arm64 only{suffix}"
 
 
 def ver_key(v):
@@ -84,13 +98,27 @@ def main():
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     total = len(cells)
-    green = sum(
-        1 for c in cells if c.get("lock") == "pass" and c.get("build") == "pass"
-    )
-    red_lock = sum(1 for c in cells if c.get("lock") == "fail")
-    red_build = sum(
-        1 for c in cells if c.get("lock") == "pass" and c.get("build") == "fail"
-    )
+
+    def status(c):
+        if c.get("lock") != "pass":
+            return "lock"
+        amd = c.get("build_amd64") == "pass"
+        arm = c.get("build_arm64") == "pass"
+        if amd and arm:
+            return "both"
+        if amd:
+            return "amd_only"
+        if arm:
+            return "arm_only"
+        return "build"
+
+    counts = {k: 0 for k in ("both", "amd_only", "arm_only", "lock", "build")}
+    for c in cells:
+        counts[status(c)] += 1
+    green = counts["both"]
+    partial = counts["amd_only"] + counts["arm_only"]
+    red_lock = counts["lock"]
+    red_build = counts["build"]
 
     out.append("# Compatibility Matrix\n")
     header_line = f"_Last run: {now}_"
@@ -98,12 +126,14 @@ def main():
         header_line += f" · [workflow run]({run_url})"
     out.append(header_line + "\n")
     out.append(
-        f"**Summary:** {green} / {total} green · "
+        f"**Summary:** {green} / {total} green (amd64+arm64) · "
+        f"{partial} partial (single arch) · "
         f"{red_lock} red (lock) · {red_build} red (build).\n"
     )
     out.append(
-        "Each green cell links to the ghcr package page; the tag in the cell "
-        "is what you `docker pull`.\n"
+        "Green cells publish a multi-arch manifest under the un-suffixed tag; "
+        "partial cells publish only the per-arch tag shown. The tag in each "
+        "cell is what you `docker pull`.\n"
     )
     out.append("---\n")
 
@@ -124,17 +154,22 @@ def main():
         out.append("")
 
     out.append("---\n")
-    out.append("## Failure legend\n")
+    out.append("## Status legend\n")
+    out.append("- **✅** — both amd64 and arm64 built; the tag is a multi-arch manifest.")
+    out.append(
+        "- **⚠️ amd64 only** / **⚠️ arm64 only** — the other arch failed to "
+        "build; only the per-arch tag shown is published (no manifest list)."
+    )
     out.append("- **❌ lock** — `uv lock` did not resolve.")
     out.append(
-        "- **❌ build** — lock resolved but `docker build` failed "
-        "(typically a missing system library or native-extension break)."
+        "- **❌ build** — lock resolved but `docker build` failed on both "
+        "arches (typically a missing system library or native-extension break)."
     )
     out.append("- **—** — no result (cell skipped or workflow interrupted).\n")
 
     out.append("## Reproduce a cell locally\n")
     out.append("```bash")
-    out.append("# Example: py3.11 / dj4.2 / rdk2024.09")
+    out.append("# Example: py3.11 / dj4.2 / rdk2024.09 on your native arch")
     out.append("PY_MIN=3.11 PY_MAX=3.12 \\")
     out.append("DJANGO_MAJOR=4.2 DJANGO_NEXT=5.0 \\")
     out.append("RDKIT_MAJOR=2024.09 RDKIT_NEXT=2024.10 \\")
