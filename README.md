@@ -154,6 +154,7 @@ Useful for code-vs-code, dump-vs-dump, or before-vs-after comparisons.
 |---|---|---|
 | [`ci.yml`](.github/workflows/ci.yml) | every push and PR to `main` | builds the image and runs smoke tests (critical imports, Django boot, `manage.py check`) |
 | [`docker-publish.yml`](.github/workflows/docker-publish.yml) | tags matching `v*` | builds multi-arch (amd64 + arm64) and pushes to `ghcr.io/iskoldt-x/protwis_django_docker` |
+| [`compatibility-matrix.yml`](.github/workflows/compatibility-matrix.yml) | manual (`workflow_dispatch`) | probes 36 (Python × Django × RDKit) combinations; pushes a per-combo image tag for every cell that builds and writes the result to [`docs/compatibility-matrix.md`](docs/compatibility-matrix.md). Used to plan upgrades |
 
 The published image is anonymously pullable, so `docker compose up` works on a fresh machine with no `docker login` step.
 

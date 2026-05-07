@@ -1,0 +1,74 @@
+# Compatibility-matrix probe template — NOT a deployable artefact.
+#
+# Used by .github/workflows/compatibility-matrix.yml. The workflow renders
+# this file into pyproject.toml per matrix cell via envsubst, expanding the
+# six ${...} variables, then runs `uv lock` and `docker build` against it.
+# See docs/design-pipeline-3.md §4 for the full rationale.
+#
+# Variables:
+#   PY_MIN, PY_MAX       e.g. 3.11, 3.12   →  >=3.11,<3.12
+#   DJANGO_MAJOR,        e.g. 4.2, 5.0     →  >=4.2,<5.0
+#   DJANGO_NEXT
+#   RDKIT_MAJOR,         e.g. 2024.09,     →  >=2024.09,<2024.10
+#   RDKIT_NEXT                2024.10
+#
+# Every accessory dependency is intentionally UNPINNED. uv resolves the
+# newest version compatible with the three pinned axes. A green cell means
+# such a set exists; a red cell means it doesn't.
+
+[project]
+name = "protwis-django-docker-matrix"
+version = "0.0.0"
+description = "Compatibility-matrix probe; not deployable."
+license = "Apache-2.0"
+requires-python = ">=${PY_MIN},<${PY_MAX}"
+
+dependencies = [
+    # --- Pinned matrix axes ----------------------------------------------
+    "Django>=${DJANGO_MAJOR},<${DJANGO_NEXT}",
+    "rdkit>=${RDKIT_MAJOR},<${RDKIT_NEXT}",
+
+    # --- Floated accessories ---------------------------------------------
+    # Mirrors production pyproject.toml minus all version pins. Some of
+    # these (notably django-rest-swagger) are known-deprecated and have
+    # no version compatible with Django 3+; cells using newer Django will
+    # fail at uv lock until this list is pruned during a real upgrade.
+    "django-debug-toolbar",
+    "django-polymorphic",
+    "django-rest-swagger",
+    "djangorestframework",
+    "django-rdkit",
+    "beautifulsoup4",
+    "biopython",
+    "cachetools",
+    "docker",
+    "Cython",
+    "datamol",
+    "freesasa",
+    "lxml",
+    "mmtf-python",
+    "openpyxl",
+    "psycopg2",
+    "PyYAML",
+    "reportlab",
+    "scikit-learn",
+    "svglib",
+    "xlrd",
+    "XlsxWriter",
+    "xmltodict",
+    "Sphinx",
+    "ipython",
+    "google-api-python-client",
+    "oauth2client",
+]
+
+[tool.uv]
+# Resolve for the Docker target platforms — same as production.
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+
+[tool.uv.sources]
+# django-rdkit has no PyPI release tracking modern rdkit; pull from git.
+django-rdkit = { git = "https://github.com/rdkit/django-rdkit.git" }

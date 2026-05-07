@@ -1,0 +1,89 @@
+name: Compatibility Matrix
+
+# Manually-triggered probe of dependency-version combinations.
+# See docs/design-pipeline-3.md for the full design.
+#
+# What this workflow does:
+#   1. Reads scripts/matrix-cells.csv (36 rows of Python × Django × RDKit).
+#   2. For each row: render pyproject.matrix.toml.tmpl → pyproject.toml,
+#      run `uv lock` (gate 1), `docker buildx build --push` (gate 2).
+#   3. After all cells: render docs/compatibility-matrix.md and commit
+#      it back to main.
+#
+# A red cell never fails the workflow — failures are data, not faults.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write          # to commit the MD
+  packages: write          # to push to ghcr
+
+jobs:
+  matrix:
+    name: Run all matrix cells
+    runs-on: ubuntu-latest
+    timeout-minutes: 330   # safety margin under the 6 h hard limit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          # Pin uv version for reproducibility; bump in a separate PR.
+          version: "0.4.30"
+
+      - name: Login to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run all matrix cells (sequential)
+        env:
+          GH_OWNER: ${{ github.repository_owner }}
+        run: |
+          mkdir -p cell-results
+          # Skip CSV comments / header / blanks; pipe the rest to the driver.
+          grep -vE '^\s*(#|py_min|$)' scripts/matrix-cells.csv | \
+          while IFS=, read -r py_min py_max dj dj_next rdk rdk_next; do
+            scripts/run_matrix_cell.sh \
+              "$py_min" "$py_max" \
+              "$dj" "$dj_next" \
+              "$rdk" "$rdk_next" \
+              cell-results/
+          done
+
+      - name: Render compatibility-matrix.md
+        env:
+          GH_OWNER: ${{ github.repository_owner }}
+          RUN_URL:  ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p docs
+          python3 scripts/render_matrix_md.py cell-results/ > docs/compatibility-matrix.md
+
+      - name: Commit compatibility-matrix.md if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/compatibility-matrix.md
+          if git diff --staged --quiet; then
+            echo "No matrix changes."
+          else
+            git commit -m "Update compatibility matrix [skip ci]"
+            git push
+          fi
+
+      - name: Upload cell results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-cell-results
+          path: cell-results/
+          retention-days: 30

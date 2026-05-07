@@ -210,6 +210,10 @@ When upstream developers change system dependencies (like adding a new Ubuntu pa
 - **If the changes were pushed to GitHub:** Simply run `docker compose pull app` to fetch the pre-built image, then `docker compose up -d` to restart.
 - **If you are testing changes to `Dockerfile` or `pyproject.toml` locally:** Run `docker compose build app` to force Docker to build a new image from your local files.
 
+### Trying a different (Python, Django, RDKit) combination
+
+The repo also publishes one image tag per combination of major versions, produced by a manually-triggered compatibility-matrix workflow. See [`docs/compatibility-matrix.md`](compatibility-matrix.md) for the live list — every green cell links to a pullable tag like `ghcr.io/iskoldt-x/protwis_django_docker:matrix-py311-dj42-rdk202409`. To try one, set `app.image` to that tag in `docker-compose.yml` and `docker compose up -d --force-recreate app`. These are *probe* images: the docker env is known to build, but upstream protwis code may or may not run on a non-baseline combination.
+
 ## 13. Where to look next
 
 - Check out the upstream [protwis repository](https://github.com/protwis/protwis) for the application code.
