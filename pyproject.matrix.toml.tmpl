@@ -62,13 +62,11 @@ dependencies = [
     "oauth2client",
 ]
 
-[tool.uv]
-# Resolve for the Docker target platforms — same as production.
-required-environments = [
-    "sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "sys_platform == 'linux' and platform_machine == 'aarch64'",
-]
-
 [tool.uv.sources]
 # django-rdkit has no PyPI release tracking modern rdkit; pull from git.
 django-rdkit = { git = "https://github.com/rdkit/django-rdkit.git" }
+
+# Note: production pyproject.toml has a [tool.uv].required-environments block
+# that hints multi-platform resolution. The matrix probe runs on a single
+# linux-x86_64 runner per cell so we don't need it; omitting it also avoids
+# a "unknown field" warning on uv versions that predate the 0.5.0 release.

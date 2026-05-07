@@ -32,6 +32,10 @@ OUT=$7
 
 mkdir -p "$OUT"
 
+# ghcr requires repository names to be lowercase. github.repository_owner
+# can have uppercase letters (e.g. iskoldt-X), so normalise once here.
+GH_OWNER_LC=$(printf '%s' "${GH_OWNER:-}" | tr '[:upper:]' '[:lower:]')
+
 # tag suffix: drop dots so it's a valid OCI tag (matrix-py311-dj42-rdk202409)
 strip_dots() { echo "$1" | tr -d '.'; }
 TAG="matrix-py$(strip_dots "$PY_MIN")-dj$(strip_dots "$DJANGO_MAJOR")-rdk$(strip_dots "$RDKIT_MAJOR")"
@@ -43,7 +47,10 @@ LOCK=fail
 BUILD=skip
 TAG_PUSHED=
 
-# 1. Render pyproject.toml from the template.
+# 1. Render pyproject.toml from the template, fresh per cell.
+#    Wipe any uv.lock left over from a previous cell so each cell resolves
+#    independently (matches what a developer would observe locally).
+rm -f uv.lock
 export PY_MIN PY_MAX DJANGO_MAJOR DJANGO_NEXT RDKIT_MAJOR RDKIT_NEXT
 envsubst < pyproject.matrix.toml.tmpl > pyproject.toml
 
@@ -60,8 +67,8 @@ if timeout 120 uv lock; then
         --cache-from "type=gha,scope=$TAG"
     )
 
-    if [ -n "${GH_OWNER:-}" ]; then
-        REMOTE_TAG="ghcr.io/${GH_OWNER}/protwis_django_docker:$TAG"
+    if [ -n "$GH_OWNER_LC" ]; then
+        REMOTE_TAG="ghcr.io/${GH_OWNER_LC}/protwis_django_docker:$TAG"
         BUILD_ARGS+=(--tag "$REMOTE_TAG" --push)
         TAG_PUSHED="$REMOTE_TAG"
     else
