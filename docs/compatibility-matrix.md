@@ -1,8 +1,8 @@
 # Compatibility Matrix
 
-_Last run: 2026-05-07 14:04 UTC_ · [workflow run](https://github.com/iskoldt-X/protwis_django_docker/actions/runs/25500431520)
+_Last run: 2026-05-07 14:49 UTC_ · [workflow run](https://github.com/iskoldt-X/protwis_django_docker/actions/runs/25501670953)
 
-**Summary:** 0 / 36 green · 10 red (lock) · 26 red (build).
+**Summary:** 26 / 36 green · 10 red (lock) · 0 red (build).
 
 Each green cell links to the ghcr package page; the tag in the cell is what you `docker pull`.
 
@@ -12,25 +12,25 @@ Each green cell links to the ghcr package page; the tag in the cell is what you 
 
 | Django \ RDKit | 2023.09 | 2024.09 | 2025.09 | 2026.03 |
 |---|---|---|---|---|
-| **3.2** | ❌ build | ❌ lock | ❌ lock | ❌ lock |
-| **4.2** | ❌ build | ❌ lock | ❌ lock | ❌ lock |
+| **3.2** | [`matrix-py38-dj32-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | ❌ lock | ❌ lock | ❌ lock |
+| **4.2** | [`matrix-py38-dj42-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | ❌ lock | ❌ lock | ❌ lock |
 | **5.2** | ❌ lock | ❌ lock | ❌ lock | ❌ lock |
 
 ## Python 3.11
 
 | Django \ RDKit | 2023.09 | 2024.09 | 2025.09 | 2026.03 |
 |---|---|---|---|---|
-| **3.2** | ❌ build | ❌ build | ❌ build | ❌ build |
-| **4.2** | ❌ build | ❌ build | ❌ build | ❌ build |
-| **5.2** | ❌ build | ❌ build | ❌ build | ❌ build |
+| **3.2** | [`matrix-py311-dj32-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj32-rdk202409`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj32-rdk202509`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj32-rdk202603`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ |
+| **4.2** | [`matrix-py311-dj42-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj42-rdk202409`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj42-rdk202509`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj42-rdk202603`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ |
+| **5.2** | [`matrix-py311-dj52-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj52-rdk202409`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj52-rdk202509`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py311-dj52-rdk202603`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ |
 
 ## Python 3.12
 
 | Django \ RDKit | 2023.09 | 2024.09 | 2025.09 | 2026.03 |
 |---|---|---|---|---|
-| **3.2** | ❌ build | ❌ build | ❌ build | ❌ build |
-| **4.2** | ❌ build | ❌ build | ❌ build | ❌ build |
-| **5.2** | ❌ build | ❌ build | ❌ build | ❌ build |
+| **3.2** | [`matrix-py312-dj32-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj32-rdk202409`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj32-rdk202509`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj32-rdk202603`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ |
+| **4.2** | [`matrix-py312-dj42-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj42-rdk202409`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj42-rdk202509`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj42-rdk202603`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ |
+| **5.2** | [`matrix-py312-dj52-rdk202309`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj52-rdk202409`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj52-rdk202509`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ | [`matrix-py312-dj52-rdk202603`](https://github.com/iskoldt-X/protwis_django_docker/pkgs/container/protwis_django_docker) ✅ |
 
 ---
 
