@@ -88,8 +88,7 @@ Tested on macOS (Apple Silicon and Intel) and Linux. On Windows, run inside WSL2
 ├── .env.example                # main-stack env template — copy to .env
 ├── .env.alt                    # alt-stack env template — for side-by-side runs
 ├── docs/
-│   ├── onboarding.md              # long-form tutorial — start here as a new contributor
-│   └── design-pipeline-1.md       # design rationale and verification log
+│   └── onboarding.md              # long-form tutorial — start here as a new contributor
 ├── LICENSE
 ├── README.md
 └── .github/workflows/

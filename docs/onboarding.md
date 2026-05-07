@@ -213,4 +213,3 @@ When upstream developers change system dependencies (like adding a new Ubuntu pa
 ## 13. Where to look next
 
 - Check out the upstream [protwis repository](https://github.com/protwis/protwis) for the application code.
-- Read [`docs/dockerization-status.md`](dockerization-status.md) if you are curious about the architectural and design decisions behind this specific Docker stack.
