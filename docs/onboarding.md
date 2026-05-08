@@ -224,7 +224,7 @@ DJANGO.append(("6.2", "7.0"))       # Django 6.2 LTS
 RDKIT.append(("2027.03", "2027.04")) # RDKit 2027.03 stable
 ```
 
-Commit, dispatch the **Compatibility Matrix** workflow from the GitHub Actions UI, and the new cells appear in `docs/compatibility-matrix.md` after the run finishes. The workflow, the cell driver, and the template are version-agnostic; you never need to touch them. Design rationale: [`docs/design-pipeline-3.md`](design-pipeline-3.md).
+Commit, dispatch the **Compatibility Matrix** workflow from the GitHub Actions UI, and the new cells appear in `docs/compatibility-matrix.md` after the run finishes. The workflow, the cell driver, and the template are version-agnostic; you never need to touch them.
 
 ## 13. Where to look next
 
