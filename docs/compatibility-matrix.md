@@ -1,6 +1,6 @@
 # Compatibility Matrix
 
-_Last run: 2026-05-08 10:18 UTC_ · [workflow run](https://github.com/iskoldt-X/protwis_django_docker/actions/runs/25547691444)
+_Last run: 2026-05-08 13:24 UTC_ · [workflow run](https://github.com/iskoldt-X/protwis_django_docker/actions/runs/25555643026)
 
 **Summary:** 26 / 36 green (amd64+arm64) · 0 partial (single arch) · 10 red (lock) · 0 red (build).
 
