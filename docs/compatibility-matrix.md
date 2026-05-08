@@ -1,10 +1,10 @@
 # Compatibility Matrix
 
-_Last run: 2026-05-07 16:45 UTC_ · [workflow run](https://github.com/iskoldt-X/protwis_django_docker/actions/runs/25508018419)
+_Last run: 2026-05-08 10:18 UTC_ · [workflow run](https://github.com/iskoldt-X/protwis_django_docker/actions/runs/25547691444)
 
-**Summary:** 26 / 36 green · 10 red (lock) · 0 red (build).
+**Summary:** 26 / 36 green (amd64+arm64) · 0 partial (single arch) · 10 red (lock) · 0 red (build).
 
-Each green cell links to the ghcr package page; the tag in the cell is what you `docker pull`.
+Green cells publish a multi-arch manifest under the un-suffixed tag; partial cells publish only the per-arch tag shown. The tag in each cell is what you `docker pull`.
 
 ---
 
@@ -34,16 +34,18 @@ Each green cell links to the ghcr package page; the tag in the cell is what you 
 
 ---
 
-## Failure legend
+## Status legend
 
+- **✅** — both amd64 and arm64 built; the tag is a multi-arch manifest.
+- **⚠️ amd64 only** / **⚠️ arm64 only** — the other arch failed to build; only the per-arch tag shown is published (no manifest list).
 - **❌ lock** — `uv lock` did not resolve.
-- **❌ build** — lock resolved but `docker build` failed (typically a missing system library or native-extension break).
+- **❌ build** — lock resolved but `docker build` failed on both arches (typically a missing system library or native-extension break).
 - **—** — no result (cell skipped or workflow interrupted).
 
 ## Reproduce a cell locally
 
 ```bash
-# Example: py3.11 / dj4.2 / rdk2024.09
+# Example: py3.11 / dj4.2 / rdk2024.09 on your native arch
 PY_MIN=3.11 PY_MAX=3.12 \
 DJANGO_MAJOR=4.2 DJANGO_NEXT=5.0 \
 RDKIT_MAJOR=2024.09 RDKIT_NEXT=2024.10 \
