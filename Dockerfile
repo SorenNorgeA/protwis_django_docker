@@ -49,12 +49,19 @@ FROM python:${PYTHON_VERSION}-slim-bookworm
 
 LABEL org.opencontainers.image.title="protwis Django Runtime"
 LABEL org.opencontainers.image.description="Python runtime for the protwis Django application (GPCRdb)"
-LABEL org.opencontainers.image.source="https://github.com/protwis/protwis_django_docker"
+LABEL org.opencontainers.image.source="https://github.com/iskoldt-x/protwis_django_docker"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
-# Runtime shared libraries only (no -dev packages).
-# libxrender1 / libxext6 are required by rdkit.Chem.Draw (transitively pulled
-# by datamol) — the Python wheel dlopens them at import time.
+# Runtime shared libraries + bioinformatics CLIs that protwis shells out to.
+#   libxrender1 / libxext6 — rdkit.Chem.Draw (datamol) dlopens at import time.
+#   ncbi-blast+            — BlastSearch in structure/functions.py and several
+#                            build_* commands; also reachable via web views.
+#   clustalo               — Bio.Align.Applications.ClustalOmegaCommandline,
+#                            used in residue/functions.py and build_annotation.
+#   dssp                   — Bio.PDB.DSSP for secondary-structure annotation
+#                            (provides /usr/bin/mkdssp on bookworm).
+#   phylip                 — phylogenetic_trees/views.py shells out to
+#                            `phylip seqboot|protdist|neighbor|consense`.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq5 \
         libxml2 \
@@ -64,6 +71,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxrender1 \
         libxext6 \
         zlib1g \
+        ncbi-blast+ \
+        clustalo \
+        dssp \
+        phylip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv

@@ -1,0 +1,138 @@
+name: Docker Publish (Full / with MODELLER)
+
+# Builds Dockerfile.full on top of the already-published runtime image
+# on ghcr.io and pushes `*-full` tags. Manually triggered — full images
+# are needed only for rebuilding the GPCRdb dataset.
+#
+# Architecture: this workflow does NOT rebuild the runtime venv or apt
+# layers; it only adds MODELLER on top of the published runtime image,
+# so each build is a few minutes (vs ~30 min for a from-source build).
+#
+# Prerequisite: the runtime image at <BASE_TAG> must already exist on
+# ghcr.io. For default `version=latest`, that's whatever the most recent
+# Docker Publish workflow pushed.
+#
+# License: this workflow does NOT need a real KEY_MODELLER. Dockerfile.full
+# installs MODELLER with a placeholder key via debconf so postinst completes
+# non-interactively. The real license is supplied at runtime as an env var
+# on the deploy host.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag used as both base tag and full suffix (e.g. v1.2.3, or "latest")'
+        required: false
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-amd64:
+    name: Build & Push Full AMD64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.full
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            BASE_TAG=${{ inputs.version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-full-amd64
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}-full-amd64
+          cache-from: type=gha,scope=amd64-full
+          cache-to: type=gha,mode=max,scope=amd64-full
+
+  build-arm64:
+    name: Build & Push Full ARM64
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.full
+          push: true
+          platforms: linux/arm64
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            BASE_TAG=${{ inputs.version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-full-arm64
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}-full-arm64
+          cache-from: type=gha,scope=arm64-full
+          cache-to: type=gha,mode=max,scope=arm64-full
+
+  merge-manifests:
+    name: Merge Full Manifests
+    runs-on: ubuntu-latest
+    needs: [build-amd64, build-arm64]
+    permissions:
+      packages: write
+    steps:
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Manifest List
+        run: |
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-full \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-full-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-full-arm64
+
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}-full \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}-full-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}-full-arm64
+
+      - name: Verify Manifest
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-full

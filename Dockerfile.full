@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1.7
+# Full variant: published runtime image + MODELLER for homology modeling.
+# Built FROM the already-published runtime — does not rebuild the venv or
+# any apt layer below MODELLER. Used only when rebuilding GPCRdb data
+# (build_homology_models, build_complex_models, check_knots,
+# structure_anomaly_recognition).
+#
+# Build:
+#   docker buildx build -f Dockerfile.full --platform linux/amd64,linux/arm64 \
+#       --build-arg BASE_IMAGE=ghcr.io/<owner>/protwis_django_docker \
+#       --build-arg BASE_TAG=latest .
+#
+# License:
+#   .deb postinst is fed a placeholder key via debconf so install completes
+#   non-interactively. The image carries no real license. At runtime, set
+#   KEY_MODELLER on the container; modeller reads the env var first and
+#   ignores the placeholder in /usr/lib/modeller<VER>/modlib/modeller/config.py.
+
+ARG BASE_IMAGE=ghcr.io/iskoldt-x/protwis_django_docker
+ARG BASE_TAG=latest
+FROM ${BASE_IMAGE}:${BASE_TAG}
+
+LABEL org.opencontainers.image.title="protwis Django Full (with MODELLER)"
+LABEL org.opencontainers.image.description="protwis runtime + MODELLER for rebuilding GPCRdb data"
+
+ARG MODELLER_VERSION=10.8
+ARG TARGETARCH
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -fsSL -o /tmp/modeller.deb \
+    "https://salilab.org/modeller/${MODELLER_VERSION}/modeller_${MODELLER_VERSION}-1_${TARGETARCH}.deb" \
+    && echo "modeller modeller/license string XXXX" | debconf-set-selections \
+    && DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/modeller.deb \
+    && rm /tmp/modeller.deb \
+    && apt-get purge -y curl \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
