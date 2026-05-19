@@ -1,7 +1,6 @@
 name: Compatibility Matrix
 
 # Manually-triggered probe of dependency-version combinations.
-# See docs/design-pipeline-3.md for the full design.
 #
 # What this workflow does:
 #   1. Two parallel jobs (amd64 on ubuntu-latest, arm64 on the self-hosted
