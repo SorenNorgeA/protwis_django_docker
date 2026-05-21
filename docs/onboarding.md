@@ -34,10 +34,12 @@ Open a terminal and create a workspace directory (e.g., `~/GitHub`), then clone 
 
 ```bash
 mkdir -p ~/GitHub && cd ~/GitHub
-git clone https://github.com/protwis/protwis
+git clone -b dev_build https://github.com/protwis/protwis
 git clone https://github.com/protwis/gpcrdb_data
 git clone https://github.com/iskoldt-x/protwis_django_docker
 ```
+
+> **Why the `dev_build` branch?** It carries the additive `settings_local_docker.py` / `settings_production_docker.py` files. The app container runs with `DJANGO_SETTINGS_MODULE=protwis.settings_local_docker`; clone the default branch instead and it crashes at startup with `ModuleNotFoundError`.
 
 ### Step 3.2: Configure the environment
 Navigate into the docker repository and copy the environment template. For the default path, no manual edits are needed.
@@ -83,7 +85,7 @@ gunzip -c ~/protwis.sql.gz | docker exec -i gpcrdb-db psql -U protwis -d protwis
 
 The SQL dump you just downloaded represents a snapshot of the database at a specific point in time. However, the `protwis` Django source code is constantly evolving.
 
-Because of this **dump-vs-code drift**, the code may expects database columns that don't exist in the older dump.
+Because of this **dump-vs-code drift**, the code may expect database columns that don't exist in the older dump.
 
 To bring your database schema up to date with the code, run:
 ```bash
@@ -168,7 +170,7 @@ Once destroyed, simply run `docker compose up -d` to create a fresh, empty datab
 Often, you want to test a massive code refactor by comparing it side-by-side with the `master` branch. Docker allows you to run two completely isolated GPCRdb stacks on the same machine simultaneously.
 
 ### The Setup
-1. Clone a second copy of protwis: `git clone https://github.com/protwis/protwis ../protwis-alt`
+1. Clone a second copy of protwis: `git clone -b dev_build https://github.com/protwis/protwis ../protwis-alt`
 2. Create an alternate environment file in your docker repo: `cp .env.example .env.alt`
 3. Edit `.env.alt` to change the project name and the host ports:
 ```bash

@@ -48,10 +48,11 @@ Tested on macOS (Apple Silicon and Intel) and Linux. On Windows, run inside WSL2
 1. **Clone the three repositories side by side**
    ```bash
    mkdir -p ~/GitHub && cd ~/GitHub
-   git clone https://github.com/protwis/protwis
+   git clone -b dev_build https://github.com/protwis/protwis
    git clone https://github.com/protwis/gpcrdb_data
    git clone https://github.com/iskoldt-x/protwis_django_docker
    ```
+   The `dev_build` branch is required — it carries the additive `settings_*_docker.py` files that `DJANGO_SETTINGS_MODULE` resolves to.
 
 2. **Copy the example env file** (no edits required for the happy path)
    ```bash
@@ -71,7 +72,7 @@ Tested on macOS (Apple Silicon and Intel) and Linux. On Windows, run inside WSL2
    gunzip -c ~/protwis.sql.gz | docker exec -i gpcrdb-db psql -U protwis -d protwis -q -1
    docker compose exec app python manage.py migrate
    ```
-   The `migrate` step is required: the published dump may lags upstream code, so a small set of Django migrations brings the schema forward. See [docs/onboarding.md](docs/onboarding.md) §5 for the rationale.
+   The `migrate` step is required: the published dump may lag upstream code, so a small set of Django migrations brings the schema forward. See [docs/onboarding.md](docs/onboarding.md) §5 for the rationale.
 
 5. **Open <http://localhost:8000>**
 
@@ -81,19 +82,25 @@ Tested on macOS (Apple Silicon and Intel) and Linux. On Windows, run inside WSL2
 
 ```
 .
-├── Dockerfile                  # multi-stage, uv-driven, Python 3.8 on bookworm-slim
-├── docker-compose.yml          # app + db + adminer; parameterised by .env
-├── pyproject.toml              # single source of truth for Python deps
-├── uv.lock                     # generated; committed for reproducibility
-├── .env.example                # main-stack env template — copy to .env
-├── .env.alt                    # alt-stack env template — for side-by-side runs
+├── Dockerfile                   # multi-stage, uv-driven, Python 3.8 on bookworm-slim
+├── Dockerfile.full              # adds MODELLER on top of the runtime image
+├── docker-compose.yml           # app + db + adminer; parameterised by .env
+├── pyproject.toml               # single source of truth for Python deps
+├── pyproject.matrix.toml.tmpl   # compatibility-matrix probe template (not deployable)
+├── uv.lock                      # generated; committed for reproducibility
+├── .env.example                 # main-stack env template — copy to .env
+├── .env.alt                     # alt-stack env template — for side-by-side runs
+├── scripts/                     # compatibility-matrix pipeline (expand/run/merge/render)
 ├── docs/
-│   └── onboarding.md              # long-form tutorial — start here as a new contributor
+│   ├── onboarding.md            # long-form tutorial — start here as a new contributor
+│   └── compatibility-matrix.md  # generated; live (Python × Django × RDKit) results
 ├── LICENSE
 ├── README.md
 └── .github/workflows/
-    ├── ci.yml                     # build + smoke on every push/PR
-    └── docker-publish.yml         # multi-arch publish to ghcr.io on v* tags
+    ├── ci.yml                   # build + smoke on every push/PR
+    ├── docker-publish.yml       # multi-arch runtime publish to ghcr.io on v* tags
+    ├── docker-publish-full.yml  # MODELLER-image publish (manual)
+    └── compatibility-matrix.yml # probe dependency combinations (manual)
 ```
 
 
@@ -171,8 +178,6 @@ The whole point of moving off conda is making upgrades testable in CI rather tha
      "apt-get update -qq && apt-get install -y -qq git && pip install -q uv && uv lock"
    ```
 3. Push — GitHub Actions builds the image and runs the smoke suite. If green, merge; if red, the failure points at the exact breakage.
-
-A future `docs/upgrading.md` will codify the Python 3.8 → 3.11 → 3.12 and Django 2.2 → 3.2 → 4.2 ladders.
 
 ---
 
